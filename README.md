@@ -8,7 +8,7 @@ Buoyancy implementation for Urho3D.
 Archimedes Principle:
 Buoyant Force = pf * displaced volume * gravity, where pf = density of water
 
-When creating an object, be sure to adjust your object's mass or it's volume(size) to allow it to float or sink.
+When creating an object, be sure to adjust your object's mass or its volume(size) to allow it to float or sink.
 
 
 Screenshots
