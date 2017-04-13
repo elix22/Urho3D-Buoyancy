@@ -72,6 +72,7 @@ CharacterDemo::CharacterDemo(Context* context)
     : Sample(context)
     , firstPerson_(false)
     , drawDebug_(false)
+    , cameraUnderwater_(false)
 {
     Character::RegisterObject(context);
     WaterVolume::RegisterObject(context);
@@ -158,6 +159,7 @@ void CharacterDemo::CreateScene()
     // post-process underwater
     effectRenderPath_ = viewport->GetRenderPath()->Clone();
     effectRenderPath_->Append(cache->GetResource<XMLFile>("PostProcess/UnderWater.xml"));
+    effectRenderPath_->SetEnabled("Underwater", false);
 
     // set BlurHInvSize to proper value
     // **note** be sure to do this if screen size changes (not done for this demo)
@@ -393,20 +395,14 @@ void CharacterDemo::HandlePostUpdate(StringHash eventType, VariantMap& eventData
         Vector3 aimPoint = characterNode->GetPosition() + rot * Vector3(0.0f, 1.7f, 0.0f);
         Vector3 rayDir = dir * Vector3::BACK;
         float rayDistance = touch_ ? touch_->cameraDistance_ : CAMERA_INITIAL_DIST;
+        const float sphRadius = 0.1f;
         PhysicsRaycastResult result;
 
-        scene_->GetComponent<PhysicsWorld>()->RaycastSingle(result, Ray(aimPoint, rayDir), rayDistance, ColMask_Camera);
+        scene_->GetComponent<PhysicsWorld>()->SphereCast(result, Ray(aimPoint, rayDir), sphRadius, rayDistance, ColMask_Camera);
 
         if (result.body_)
         {
             rayDistance = Min(rayDistance, result.distance_);
-
-            // push the distance away from the water surface
-            if (result.body_->GetCollisionLayer() == ColLayer_Water)
-            {
-                rayDistance *= 0.9f;
-            }
-
         }
         rayDistance = Clamp(rayDistance, CAMERA_MIN_DIST, CAMERA_MAX_DIST);
 
