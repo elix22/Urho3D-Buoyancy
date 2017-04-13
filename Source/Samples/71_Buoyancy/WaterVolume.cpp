@@ -102,13 +102,6 @@ void WaterVolume::FixedUpdate(float timeStep)
                         Vector3 partialBF = buoyantForce * (buoyCol.partialVolList[j]/buoyCol.totalVol);
                         Vector3 relPos = buoyCol.worldPointList[j] - center;
 
-                        #ifdef DBG_PARTIAL_FORCES
-                        SDL_Log("tf=%.4f, pf=%.4f, pt(%.2f, %.2f, %.2f), pctg=%.3f", 
-                                buoyantForce.y_, partialBF.y_,
-                                relPos.x_, relPos.y_, relPos.z_,
-                                (buoyCol.partialVolList[j]/buoyCol.totalVol));
-                        #endif
-
                         rbody->ApplyForce(partialBF, relPos);
                     }
                 }
@@ -176,7 +169,7 @@ void WaterVolume::RemoveExpired()
     }
 }
 
-int WaterVolume::IsBodyInList(RigidBody *rbody) const
+int WaterVolume::GetBodyListIdx(RigidBody *rbody) const
 {
     int idx = -1;
 
@@ -208,7 +201,7 @@ void WaterVolume::HandleWaterCollisionEvent(StringHash eventType, VariantMap& ev
     BuoyCol *pbuoyCol = NULL;
 
     // get or create rbody obj list
-    if ((idx = IsBodyInList(rbody)) >= 0)
+    if ((idx = GetBodyListIdx(rbody)) >= 0)
     {
         pbuoyCol = &buoyColList_.At(idx);
     }
@@ -261,14 +254,7 @@ void BuoyCol::SetupBuoyShapeData(RigidBody *_rbody, CollisionShape *_colShape)
 
 void BuoyCol::UpdateColPoints(const BoundingBox &waterBbox)
 {
-    if (colShape->GetShapeType() == SHAPE_SPHERE)
-    {
-        UpdateSphereData(waterBbox);
-    }
-    else
-    {
-        UpdateBboxPoints(waterBbox);
-    }
+    UpdateBuoyPoints(waterBbox);
 
     // reset flags and timer
     updateTimer.Reset();
@@ -280,22 +266,20 @@ void BuoyCol::ConfigSphereData()
     // sphere requires only a single point
     SetContainerSize(1);
 
-    // set center = ZERO - might have to change this and take aabb center in case of offset
-    localPointList[0] = Vector3::ZERO;
+    // get center and radius
+    btTransform idTrans;
+    btVector3 btaabbMin, btaabbMax;
+    idTrans.setIdentity();
+    colShape->GetCollisionShape()->getAabb(idTrans, btaabbMin, btaabbMax);
+    const Vector3& mmin = ToVector3(btaabbMin);
+    const Vector3& mmax = ToVector3(btaabbMax);
+
+    localPointList[0] = (mmax + mmin) * 0.5f;
+    pointRadius = (mmax - mmin).x_ * 0.5f;
 
     // point volume
-    pointRadius = (colShape->GetSize() * rbody->GetNode()->GetWorldScale()).x_ * 0.5f;
     pointMaxSphVol = 4.0f/3.0f * MPI * pointRadius * pointRadius * pointRadius;
     distributedVolumePerPt = pointMaxSphVol;
-}
-
-void BuoyCol::UpdateSphereData(const BoundingBox &waterBbox)
-{
-    btTransform worldTrans;
-    rbody->getWorldTransform(worldTrans);
-
-    worldPointList[0] = ToVector3(worldTrans * ToBtVector3(localPointList[0]));
-    pointHeightList[0] = worldPointList[0].y_ - waterBbox.max_.y_;
 }
 
 void BuoyCol::ConfigBboxPointData()
@@ -329,7 +313,7 @@ void BuoyCol::ConfigBboxPointData()
     pointMaxSphVol = 4.0f/3.0f * MPI * pointRadius * pointRadius * pointRadius;
 }
 
-void BuoyCol::UpdateBboxPoints(const BoundingBox &waterBbox)
+void BuoyCol::UpdateBuoyPoints(const BoundingBox &waterBbox)
 {
     btTransform worldTrans;
     rbody->getWorldTransform(worldTrans);

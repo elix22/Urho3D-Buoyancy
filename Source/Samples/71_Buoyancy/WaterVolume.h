@@ -51,8 +51,7 @@ protected:
     void SetContainerSize(unsigned csize);
     void ConfigSphereData();
     void ConfigBboxPointData();
-    void UpdateSphereData(const BoundingBox &waterBbox);
-    void UpdateBboxPoints(const BoundingBox &waterBbox);
+    void UpdateBuoyPoints(const BoundingBox &waterBbox);
     float GetShapeVolume(const Vector3 &shapeSize) const;
 
 public:
@@ -93,7 +92,7 @@ protected:
     float CalcSubmergedVolume(BuoyCol &buoyCol);
 
     void RemoveExpired();
-    int IsBodyInList(RigidBody *rbody) const;
+    int GetBodyListIdx(RigidBody *rbody) const;
 
     void HandleWaterCollisionEvent(StringHash eventType, VariantMap& eventData);
 
