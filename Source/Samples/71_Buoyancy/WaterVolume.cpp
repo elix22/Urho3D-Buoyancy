@@ -267,12 +267,8 @@ void BuoyCol::ConfigSphereData()
     SetContainerSize(1);
 
     // get center and radius
-    btTransform idTrans;
-    btVector3 btaabbMin, btaabbMax;
-    idTrans.setIdentity();
-    colShape->GetCollisionShape()->getAabb(idTrans, btaabbMin, btaabbMax);
-    const Vector3& mmin = ToVector3(btaabbMin);
-    const Vector3& mmax = ToVector3(btaabbMax);
+    Vector3 mmin, mmax;
+    GetLocalAabb(mmin, mmax);
 
     localPointList[0] = (mmax + mmin) * 0.5f;
     pointRadius = (mmax - mmin).x_ * 0.5f;
@@ -284,12 +280,8 @@ void BuoyCol::ConfigSphereData()
 
 void BuoyCol::ConfigBboxPointData()
 {
-    btTransform idTrans;
-    btVector3 btaabbMin, btaabbMax;
-    idTrans.setIdentity();
-    colShape->GetCollisionShape()->getAabb(idTrans, btaabbMin, btaabbMax);
-    const Vector3& mmin = ToVector3(btaabbMin);
-    const Vector3& mmax = ToVector3(btaabbMax);
+    Vector3 mmin, mmax;
+    GetLocalAabb(mmin, mmax);
 
     // config pts of a bbox
     // **note** obviously you can position the pts where ever you need
@@ -323,6 +315,16 @@ void BuoyCol::UpdateBuoyPoints(const BoundingBox &waterBbox)
         worldPointList[i] = ToVector3(worldTrans * ToBtVector3(localPointList[i]));
         pointHeightList[i] = worldPointList[i].y_ - waterBbox.max_.y_;
     }
+}
+
+void BuoyCol::GetLocalAabb(Vector3 &mmin, Vector3 &mmax)
+{
+    btTransform idTrans;
+    btVector3 btaabbMin, btaabbMax;
+    idTrans.setIdentity();
+    colShape->GetCollisionShape()->getAabb(idTrans, btaabbMin, btaabbMax);
+    mmin = ToVector3(btaabbMin);
+    mmax = ToVector3(btaabbMax);
 }
 
 float BuoyCol::GetShapeVolume(const Vector3 &shapeSize) const

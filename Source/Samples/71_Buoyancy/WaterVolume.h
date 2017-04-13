@@ -52,6 +52,7 @@ protected:
     void ConfigSphereData();
     void ConfigBboxPointData();
     void UpdateBuoyPoints(const BoundingBox &waterBbox);
+    void GetLocalAabb(Vector3 &mmin, Vector3 &mmax);
     float GetShapeVolume(const Vector3 &shapeSize) const;
 
 public:
