@@ -4,7 +4,7 @@
 #include "ScreenPos.hlsl"
 #include "PostProcess.hlsl"
 
-uniform float2 cDiffuseRGB;
+uniform float3 cWaterTint;
 
 void VS(float4 iPos : POSITION,
     out float2 oScreenPos : TEXCOORD0,
@@ -19,10 +19,13 @@ void VS(float4 iPos : POSITION,
 void PS(float2 iScreenPos : TEXCOORD0,
         out float4 oColor : OUTCOLOR0)
 {
-    float4 finalColor =  Sample2D(DiffMap, iScreenPos);
+    float2 uv = iScreenPos;
+    float offset = (cElapsedTimePS) * 2.0 * 3.14159 * 0.75;
+    uv.x += sin(uv.y * 3.14159 * 8.0 + offset)/500;
 
-    finalColor.rg *= cDiffuseRGB.x;
-    finalColor.b += cDiffuseRGB.y;
+    float4 finalColor =  Sample2D(DiffMap, uv);
+
+    finalColor.rgb *= cWaterTint;
 
     oColor = finalColor;
 }

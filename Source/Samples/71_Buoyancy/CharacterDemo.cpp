@@ -60,6 +60,7 @@
 #include "Touch.h"
 #include "WaterVolume.h"
 #include "CollisionLayer.h"
+#include "SmoothStep.h"
 
 #include <Urho3D/DebugNew.h>
 //=============================================================================
@@ -179,6 +180,7 @@ void CharacterDemo::UpdateUnderwaterView()
         {
             effectRenderPath_->SetEnabled("Underwater", true);
             cameraUnderwater_ = true;
+            SetWaterClipplane(cameraUnderwater_);
         }
     }
     else
@@ -187,8 +189,21 @@ void CharacterDemo::UpdateUnderwaterView()
         {
             effectRenderPath_->SetEnabled("Underwater", false);
             cameraUnderwater_ = false;
+            SetWaterClipplane(cameraUnderwater_);
         }
     }
+
+}
+
+void CharacterDemo::SetWaterClipplane(bool inwater)
+{
+
+    Vector3 waterSurfacePos = waterNode_->GetWorldPosition();
+    waterSurfacePos.y_ = !inwater?waterBbox_.max_.y_:waterBbox_.min_.y_;
+
+    waterClipPlane_.Define(waterNode_->GetWorldRotation() * Vector3(0.0f, 1.0f, 0.0f), waterSurfacePos - Vector3(0.0f, 0.1f, 0.0f));
+    Camera* reflectionCamera = reflectionCameraNode_->GetComponent<Camera>();
+    reflectionCamera->SetClipPlane(waterClipPlane_);
 }
 
 void CharacterDemo::CreateWaterVolume()
@@ -288,6 +303,10 @@ void CharacterDemo::CreateCharacter()
 
     // set water node
     character_->SetWaterNode(waterNode_);
+
+    // init char pos/rot
+    charRot_ = Quaternion(character_->controls_.yaw_, Vector3::UP);
+    charPos_ = objectNode->GetPosition();
 }
 
 void CharacterDemo::CreateInstructions()
@@ -387,12 +406,24 @@ void CharacterDemo::HandlePostUpdate(StringHash eventType, VariantMap& eventData
     if (!character_)
         return;
 
+    using namespace Update;
+    float timeStep = eventData[P_TIMESTEP].GetFloat();
+
     Node* characterNode = character_->GetNode();
+    Vector3 charPos = characterNode->GetPosition();
     Quaternion rot = characterNode->GetRotation();
-    Quaternion dir = rot * Quaternion(character_->controls_.pitch_, Vector3::RIGHT);
+
+    // smooth cam
+    const float posLerpRate = 14.0f;
+    const float rotLerpRate = 15.0f;
+
+    charPos_ = SmoothStep(charPos_, charPos, timeStep * posLerpRate);
+    charRot_ = SmoothStepAngle(charRot_, rot, timeStep * rotLerpRate);
+
+    Quaternion dir = charRot_ * Quaternion(character_->controls_.pitch_, Vector3::RIGHT);
 
     {
-        Vector3 aimPoint = characterNode->GetPosition() + rot * Vector3(0.0f, 1.7f, 0.0f);
+        Vector3 aimPoint = charPos_ + charRot_ * Vector3(0.0f, 1.7f, 0.0f);
         Vector3 rayDir = dir * Vector3::BACK;
         float rayDistance = touch_ ? touch_->cameraDistance_ : CAMERA_INITIAL_DIST;
         const float sphRadius = 0.1f;
@@ -404,7 +435,6 @@ void CharacterDemo::HandlePostUpdate(StringHash eventType, VariantMap& eventData
         {
             rayDistance = Min(rayDistance, result.distance_);
         }
-        rayDistance = Clamp(rayDistance, CAMERA_MIN_DIST, CAMERA_MAX_DIST);
 
         cameraNode_->SetPosition(aimPoint + rayDir * rayDistance);
         cameraNode_->SetRotation(dir);

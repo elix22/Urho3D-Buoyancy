@@ -73,9 +73,8 @@ void WaterVolume::FixedUpdate(float timeStep)
 
         if (buoyCol.IsFrameUpdated())
         {
-            RigidBody *rbody = buoyCol.rbody;
-
             // apply viscosity
+            RigidBody *rbody = buoyCol.rbody;
             Vector3 linVel = rbody->GetLinearVelocity();
             Vector3 angVel = rbody->GetAngularVelocity();
             linVel.x_ *= (1.0f - horizontalViscosity_);
@@ -280,13 +279,12 @@ void BuoyCol::ConfigSphereData()
 
 void BuoyCol::ConfigBboxPointData()
 {
-    Vector3 mmin, mmax;
-    GetLocalAabb(mmin, mmax);
-
     // config pts of a bbox
     // **note** obviously you can position the pts where ever you need
     // example 1, for boats, move the bottom +z points back a bit to match the hull bottom
     // example 2, for cones, only add five pts - one top center and four bottom corners
+    Vector3 mmin, mmax;
+    GetLocalAabb(mmin, mmax);
     localPointList[0] = mmin;                               // (-x, -y, -z)
     localPointList[1] = Vector3(mmax.x_, mmin.y_, mmin.z_); // (+x, -y, -z)
     localPointList[2] = Vector3(mmin.x_, mmax.y_, mmin.z_); // (-x, +y, -z)

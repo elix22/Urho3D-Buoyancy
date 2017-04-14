@@ -3,7 +3,7 @@
 #include "Transform.glsl"
 #include "ScreenPos.glsl"
 
-uniform vec2 cDiffuseRGB;
+uniform vec3 cWaterTint;
 varying vec2 vScreenPos;
 
 void VS()
@@ -16,10 +16,13 @@ void VS()
 
 void PS()
 {
-    vec4 finalColor =  texture2D(sDiffMap, vScreenPos);
+    // water distortion effect - from opengl website
+    vec2 uv = vScreenPos;
+    float offset = (cElapsedTimePS) * 2.0 * 3.14159 * 0.75;
+    uv.x += sin(uv.y * 3.14159 * 8.0 + offset)/500;
 
-    finalColor.rg *= cDiffuseRGB.x;
-    finalColor.b += cDiffuseRGB.y;
+    vec4 finalColor = texture2D(sDiffMap, uv);
+    finalColor.rgb *= cWaterTint;
 
     gl_FragColor = finalColor;
 }

@@ -114,9 +114,12 @@ protected:
     void CreateWaterVolume();
     void CreateWaterRefection();
     void UpdateUnderwaterView();
+    void SetWaterClipplane(bool inwater);
 
     /// Create controllable character.
     void CreateCharacter();
+    void InitCamPos();
+
     /// Construct an instruction text to the UI.
     void CreateInstructions();
     /// Subscribe to necessary events.
@@ -129,15 +132,19 @@ protected:
     
 protected:
     // water reflection
-    SharedPtr<Node> reflectionCameraNode_;
-    SharedPtr<Node> waterNode_;
-    Plane waterPlane_;
-    Plane waterClipPlane_;
+    SharedPtr<Node>       reflectionCameraNode_;
+    SharedPtr<Node>       waterNode_;
+    Plane                 waterPlane_;
+    Plane                 waterClipPlane_;
 
     // water bbox
     SharedPtr<RenderPath> effectRenderPath_;
     BoundingBox           waterBbox_;
     bool                  cameraUnderwater_;
+
+    // smooth cam
+    Vector3               charPos_;
+    Quaternion            charRot_;
 
     /// Touch utility object.
     SharedPtr<Touch> touch_;
