@@ -54,7 +54,6 @@ Vector3 SmoothStep(const Vector3 &p1, const Vector3 &p2, float t, float toleranc
     if ((p1-p2).LengthSquared() < tolerance*tolerance) 
         return p2;
 
-    t = Clamp(t, 0.0f, 1.0f);
     const float t2 = t * t;
     const float t3 = t2 * t;
     return p1.Lerp(p2, 0.5f * t + 1.5f * t2 - t3);
@@ -69,7 +68,6 @@ Quaternion SmoothStepAngle(const Quaternion &p1, const Quaternion &p2, float t, 
     if ((p1-p2).LengthSquared() < tolerance*tolerance) 
         return p2;
 
-    t = Clamp(t, 0.0f, 1.0f);
     const float t2 = t * t;
     const float t3 = t2 * t;
     return p1.Slerp(p2, 0.5f * t + 1.5f * t2 - t3);
